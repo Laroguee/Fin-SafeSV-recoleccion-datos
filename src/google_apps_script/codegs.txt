@@ -1,0 +1,159 @@
+// Renderiza el formulario web HTML
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('FinSafe SV - Registro de Crédito')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// Aplica el formato contable y de fecha a toda la hoja
+function aplicarFormatoColumnas(hoja) {
+  // A: id (Texto), B: depto (Texto), C: edad (Entero), D: empleo (Texto)
+  hoja.getRange("A2:A").setNumberFormat("@");
+  hoja.getRange("C2:C").setNumberFormat("0");
+  
+  // E: ingreso_mensual (Moneda)
+  hoja.getRange("E2:E").setNumberFormat('"$"#,##0.00');
+  
+  // F: monto_otorgado (Moneda)
+  hoja.getRange("F2:F").setNumberFormat('"$"#,##0.00');
+  
+  // G: tasa_interes (Porcentaje)
+  hoja.getRange("G2:G").setNumberFormat('0.0"%"');
+  
+  // H: plazo_meses (Entero)
+  hoja.getRange("H2:H").setNumberFormat('0');
+  
+  // I: cuota_programada (Moneda)
+  hoja.getRange("I2:I").setNumberFormat('"$"#,##0.00');
+  
+  // J: monto_pagado (Moneda)
+  hoja.getRange("J2:J").setNumberFormat('"$"#,##0.00');
+  
+  // K: dias_atraso (Entero)
+  hoja.getRange("K2:K").setNumberFormat('0');
+  
+  // M y N: Fechas
+  hoja.getRange("M2:M").setNumberFormat('yyyy-mm-dd');
+  hoja.getRange("N2:N").setNumberFormat('yyyy-mm-dd');
+}
+
+// Procesa el envío del formulario individual
+function registrarCredito(datos) {
+  try {
+    const libro = SpreadsheetApp.getActiveSpreadsheet();
+    const hoja = libro.getSheetByName('Dataset');
+    
+    const ultimaFila = hoja.getLastRow();
+    const nuevoId = "PREST-" + String(ultimaFila).padStart(5, '0');
+    
+    // Se inserta la fila con tipos numéricos reales
+    hoja.appendRow([
+      nuevoId,
+      datos.departamento,
+      parseInt(datos.edad_cliente, 10),
+      datos.tipo_empleo,
+      parseFloat(datos.ingreso_mensual),
+      parseFloat(datos.monto_otorgado),
+      parseFloat(datos.tasa_interes),
+      parseInt(datos.plazo_meses, 10),
+      parseFloat(datos.cuota_programada),
+      parseFloat(datos.monto_pagado),
+      parseInt(datos.dias_atraso, 10),
+      datos.estado_credito,
+      datos.fecha_desembolso,
+      datos.fecha_ultimo_pago
+    ]);
+    
+    // Formatea la fila recién agregada
+    const filaInsertada = hoja.getLastRow();
+    hoja.getRange(filaInsertada, 5).setNumberFormat('"$"#,##0.00'); // Ingreso
+    hoja.getRange(filaInsertada, 6).setNumberFormat('"$"#,##0.00'); // Monto Otorgado
+    hoja.getRange(filaInsertada, 7).setNumberFormat('0.0"%"');      // Tasa
+    hoja.getRange(filaInsertada, 9).setNumberFormat('"$"#,##0.00'); // Cuota
+    hoja.getRange(filaInsertada, 10).setNumberFormat('"$"#,##0.00'); // Monto Pagado
+    
+    return { exito: true, mensaje: "Registro guardado con éxito bajo el código: " + nuevoId };
+  } catch (error) {
+    return { exito: false, mensaje: "Error al registrar: " + error.message };
+  }
+}
+
+// Genera 1,000 registros sintéticos y formatea toda la tabla
+function generar1000Registros() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  const hoja = libro.getSheetByName('Dataset');
+  
+  // Limpiar datos previos si existen (conservando la fila de encabezados)
+  if (hoja.getLastRow() > 1) {
+    hoja.getRange(2, 1, hoja.getLastRow() - 1, 14).clearContent();
+  }
+  
+  const departamentos = [
+    "San Salvador", "La Libertad", "Santa Ana", "San Miguel", "Sonsonate",
+    "Usulután", "Ahuachapán", "La Paz", "Chalatenango", "Cuscatlán",
+    "Morazán", "San Vicente", "Cabañas", "La Unión"
+  ];
+  const tiposEmpleo = ["Formal", "Independiente", "Jubilado"];
+  const registros = [];
+  const fInicio = new Date(2024, 0, 1).getTime();
+  const fFin = new Date(2026, 7, 31).getTime();
+  
+  for (let i = 1; i <= 1000; i++) {
+    const id = "PREST-" + String(i).padStart(5, '0');
+    const depto = departamentos[Math.floor(Math.random() * departamentos.length)];
+    const edad = Math.floor(Math.random() * (68 - 20 + 1)) + 20;
+    const empleo = tiposEmpleo[Math.floor(Math.random() * tiposEmpleo.length)];
+    
+    // Ingresos calibrados según formalidad en SV
+    let ingreso = empleo === "Formal" ? (Math.random() * 1900 + 420) : (Math.random() * 1100 + 365);
+    ingreso = Math.round(ingreso * 100) / 100;
+    
+    const monto = Math.round((Math.random() * 7500 + 600) * 100) / 100;
+    const tasa = Math.round((Math.random() * (26 - 11) + 11) * 10) / 10;
+    const plazos = [12, 18, 24, 36, 48, 60];
+    const plazo = plazos[Math.floor(Math.random() * plazos.length)];
+    
+    // Cuota fija mensual (fórmula de anualidad francesa)
+    const iMensual = (tasa / 100) / 12;
+    const cuota = Math.round((monto * (iMensual / (1 - Math.pow(1 + iMensual, -plazo)))) * 100) / 100;
+    
+    const rand = Math.random();
+    let diasAtraso = 0;
+    let estado = "Al día";
+    
+    if (rand > 0.82) {
+      diasAtraso = Math.floor(Math.random() * 110) + 31;
+      estado = diasAtraso > 90 ? "Vencido" : "Atrasado";
+    } else if (rand > 0.65) {
+      diasAtraso = Math.floor(Math.random() * 30) + 1;
+      estado = "Atrasado";
+    }
+    
+    const cuotasPagadas = Math.floor(Math.random() * (plazo / 2)) + 1;
+    const montoPagado = Math.round((cuotasPagadas * cuota) * 100) / 100;
+    
+    const fechaDesembolso = new Date(fInicio + Math.random() * (fFin - fInicio));
+    const fechaUltimoPago = new Date(fechaDesembolso.getTime() + (cuotasPagadas * 30 * 24 * 60 * 60 * 1000));
+    
+    registros.push([
+      id,
+      depto,
+      edad,
+      empleo,
+      ingreso,
+      monto,
+      tasa,
+      plazo,
+      cuota,
+      montoPagado,
+      diasAtraso,
+      estado,
+      fechaDesembolso.toISOString().split('T')[0],
+      fechaUltimoPago.toISOString().split('T')[0]
+    ]);
+  }
+  
+  hoja.getRange(2, 1, registros.length, 14).setValues(registros);
+  aplicarFormatoColumnas(hoja);
+  Logger.log("Dataset generado y formateado exitosamente con 1,000 registros.");
+}

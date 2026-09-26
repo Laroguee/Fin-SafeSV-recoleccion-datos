@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      .main-card { border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+      .header-box { background: linear-gradient(135deg, #182B49 0%, #2980B9 100%); color: white; border-radius: 12px 12px 0 0; padding: 2rem 1.5rem; }
+      .form-section-title { font-size: 0.95rem; font-weight: 700; color: #182B49; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.4rem; margin-bottom: 1.2rem; }
+      .form-text { font-size: 0.78rem; color: #64748b; margin-top: 0.25rem; }
+      .input-group-text { background-color: #f8fafc; font-weight: 600; color: #475569; }
+      .badge-info-field { background-color: #e0f2fe; color: #0369a1; font-weight: 600; font-size: 0.72rem; }
+    </style>
+  </head>
+  <body class="py-4">
+    <div class="container" style="max-width: 780px;">
+      <div class="card main-card">
+        <div class="header-box text-center">
+          <h3 class="fw-bold mb-1">FinSafe SV</h3>
+          <p class="mb-0 opacity-75">Sistema de Captura y Calificación de Operaciones Crediticias</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form id="creditForm" onsubmit="enviarFormulario(event)">
+            
+            <!-- SECCIÓN 1: CLIENTE -->
+            <div class="form-section-title">1. Información Sociodemográfica del Solicitante</div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Departamento de Residencia</label>
+                <select class="form-select" id="departamento" required>
+                  <option value="">Seleccione el departamento...</option>
+                  <option value="San Salvador">San Salvador</option>
+                  <option value="La Libertad">La Libertad</option>
+                  <option value="Santa Ana">Santa Ana</option>
+                  <option value="San Miguel">San Miguel</option>
+                  <option value="Sonsonate">Sonsonate</option>
+                  <option value="Usulután">Usulután</option>
+                  <option value="Ahuachapán">Ahuachapán</option>
+                  <option value="La Paz">La Paz</option>
+                  <option value="Chalatenango">Chalatenango</option>
+                  <option value="Cuscatlán">Cuscatlán</option>
+                  <option value="Morazán">Morazán</option>
+                  <option value="San Vicente">San Vicente</option>
+                  <option value="Cabañas">Cabañas</option>
+                  <option value="La Unión">La Unión</option>
+                </select>
+                <div class="form-text">Ubicación de la sucursal o domicilio fiscal del cliente en El Salvador.</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Edad del Cliente</label>
+                <input type="number" class="form-control" id="edad_cliente" min="18" max="80" placeholder="Ej. 34" required>
+                <div class="form-text">Edad en años cumplidos (rango de 18 a 80).</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Tipo de Empleo</label>
+                <select class="form-select" id="tipo_empleo" required>
+                  <option value="Formal">Formal (Asalariado)</option>
+                  <option value="Independiente">Independiente</option>
+                  <option value="Jubilado">Jubilado / Pensionado</option>
+                </select>
+                <div class="form-text">Fuente de ingresos comprobables.</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Ingreso Mensual Comprobable</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="0.01" class="form-control" id="ingreso_mensual" placeholder="0.00" min="100" required>
+                  <span class="input-group-text">USD</span>
+                </div>
+                <div class="form-text">Sueldo neto mensual o ingresos promedio declarados en boleta/declaración de IVA.</div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: CONDICIONES DEL PRÉSTAMO -->
+            <div class="form-section-title">2. Condiciones Contractuales del Crédito</div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Monto Otorgado (Capital)</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="0.01" class="form-control" id="monto_otorgado" oninput="calcularCuotaSugerida()" placeholder="Ej. 3500.00" min="200" required>
+                  <span class="input-group-text">USD</span>
+                </div>
+                <div class="form-text">Monto total de dinero aprobado y desembolsado al titular.</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Tasa Activa Anual</label>
+                <div class="input-group">
+                  <input type="number" step="0.1" class="form-control" id="tasa_interes" oninput="calcularCuotaSugerida()" placeholder="Ej. 14.5" min="5" max="45" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <div class="form-text">Tasa de interés contractual anual pactada.</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Plazo del Crédito</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="plazo_meses" oninput="calcularCuotaSugerida()" placeholder="Ej. 36" min="6" max="96" required>
+                  <span class="input-group-text">Meses</span>
+                </div>
+                <div class="form-text">Duración total pactada (12 a 84 meses).</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Cuota Mensual Programada 
+                  <span class="badge badge-info-field ms-1">Calculada</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="0.01" class="form-control bg-light" id="cuota_programada" placeholder="0.00" required>
+                  <span class="input-group-text">USD</span>
+                </div>
+                <div class="form-text">Monto que el cliente debe pagar mensualmente (capital + intereses).</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Desembolso</label>
+                <input type="date" class="form-control" id="fecha_desembolso" required>
+                <div class="form-text">Día en que se firmó el pagaré y se entregaron los fondos.</div>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 3: CONTROL DE PAGOS Y MORA -->
+            <div class="form-section-title">3. Estado de Amortización y Mora</div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Monto Pagado Acumulado a la Fecha</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="0.01" class="form-control" id="monto_pagado" placeholder="0.00" required>
+                  <span class="input-group-text">USD</span>
+                </div>
+                <div class="form-text">Total de dinero que la entidad ya ha recuperado de este préstamo a la fecha.</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Días de Atraso</label>
+                <input type="number" class="form-control" id="dias_atraso" oninput="actualizarEstadoAutomatico()" min="0" value="0" required>
+                <div class="form-text">Días desde la fecha de corte vencida sin pago (0 = Al día).</div>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Estado del Préstamo</label>
+                <select class="form-select fw-bold" id="estado_credito" required>
+                  <option value="Al día">Al día (0 días)</option>
+                  <option value="Atrasado">Atrasado (1 a 90 días)</option>
+                  <option value="Vencido">Vencido (+90 días)</option>
+                </select>
+                <div class="form-text">Clasificación de riesgo según normativa.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha del Último Pago Registrado</label>
+                <input type="date" class="form-control" id="fecha_ultimo_pago" required>
+                <div class="form-text">Última vez que el prestatario abonó a la cuenta.</div>
+              </div>
+            </div>
+
+            <button type="submit" id="btnGuardar" class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+              Guardar Operación de Crédito
+            </button>
+          </form>
+
+          <div id="resultado" class="mt-3 text-center fw-bold"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Cálculo automático de la cuota según fórmula financiera
+      function calcularCuotaSugerida() {
+        const monto = parseFloat(document.getElementById("monto_otorgado").value);
+        const tasaAnual = parseFloat(document.getElementById("tasa_interes").value);
+        const plazo = parseInt(document.getElementById("plazo_meses").value, 10);
+
+        if (monto > 0 && tasaAnual > 0 && plazo > 0) {
+          const iMensual = (tasaAnual / 100) / 12;
+          const cuota = monto * (iMensual / (1 - Math.pow(1 + iMensual, -plazo)));
+          document.getElementById("cuota_programada").value = cuota.toFixed(2);
+        }
+      }
+
+      // Sugerir estado del crédito automáticamente según días de atraso
+      function actualizarEstadoAutomatico() {
+        const dias = parseInt(document.getElementById("dias_atraso").value, 10) || 0;
+        const selector = document.getElementById("estado_credito");
+        if (dias === 0) {
+          selector.value = "Al día";
+        } else if (dias > 90) {
+          selector.value = "Vencido";
+        } else {
+          selector.value = "Atrasado";
+        }
+      }
+
+      function enviarFormulario(e) {
+        e.preventDefault();
+        const btn = document.getElementById("btnGuardar");
+        btn.disabled = true;
+        btn.innerText = "Guardando en base de datos...";
+
+        const datos = {
+          departamento: document.getElementById("departamento").value,
+          edad_cliente: document.getElementById("edad_cliente").value,
+          tipo_empleo: document.getElementById("tipo_empleo").value,
+          ingreso_mensual: document.getElementById("ingreso_mensual").value,
+          monto_otorgado: document.getElementById("monto_otorgado").value,
+          tasa_interes: document.getElementById("tasa_interes").value,
+          plazo_meses: document.getElementById("plazo_meses").value,
+          cuota_programada: document.getElementById("cuota_programada").value,
+          monto_pagado: document.getElementById("monto_pagado").value,
+          dias_atraso: document.getElementById("dias_atraso").value,
+          estado_credito: document.getElementById("estado_credito").value,
+          fecha_desembolso: document.getElementById("fecha_desembolso").value,
+          fecha_ultimo_pago: document.getElementById("fecha_ultimo_pago").value
+        };
+
+        google.script.run
+          .withSuccessHandler(function(resp) {
+            btn.disabled = false;
+            btn.innerText = "Guardar Operación de Crédito";
+            const resDiv = document.getElementById("resultado");
+            if (resp.exito) {
+              resDiv.className = "alert alert-success mt-3 text-center";
+              resDiv.innerText = resp.mensaje;
+              document.getElementById("creditForm").reset();
+            } else {
+              resDiv.className = "alert alert-danger mt-3 text-center";
+              resDiv.innerText = resp.mensaje;
+            }
+          })
+          .registrarCredito(datos);
+      }
+    </script>
+  </body>
+</html>
